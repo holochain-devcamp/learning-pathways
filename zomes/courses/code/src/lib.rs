@@ -107,64 +107,63 @@ mod course_zome {
   }
 
   /**************************** Module Entry Definition & Functions */
-//   #[entry_def]
-//   fn module_entry_definition() -> ValidatingEntryType {
-//     module::entry_def()
-//   }
+  #[entry_def]
+  fn module_entry_definition() -> ValidatingEntryType {
+    module::entry_def()
+  }
 
-//   #[zome_fn("hc_public")]
-//   fn create_module(
-//     title: String,
-//     course_address: Address,
-//     timestamp: u64,
-//   ) -> ZomeApiResult<Address> {
-//     module::create(title, &course_address, timestamp)
-//   }
+  #[zome_fn("hc_public")]
+  fn create_module(
+    title: String,
+    course_address: Address,
+    timestamp: u64,
+  ) -> ZomeApiResult<Address> {
+    module::create(title, &course_address, timestamp)
+  }
 
-//   #[zome_fn("hc_public")]
-//   fn update_module(title: String, module_address: Address) -> ZomeApiResult<Address> {
-//     module::update(title, &module_address)
-//   }
+  #[zome_fn("hc_public")]
+  fn update_module(title: String, module_address: Address) -> ZomeApiResult<Address> {
+    module::update(title, &module_address)
+  }
 
-//   #[zome_fn("hc_public")]
-//   fn delete_module(module_address: Address) -> ZomeApiResult<Address> {
-//     module::delete(module_address)
-//   }
+  #[zome_fn("hc_public")]
+  fn delete_module(module_address: Address) -> ZomeApiResult<Address> {
+    module::delete(module_address)
+  }
 
-//   /**************************** Content Zome Functions */
-//   #[entry_def]
-//   fn content_entry_definition() -> ValidatingEntryType {
-//     content::module_entry_def()
-//   }
+  /**************************** Content Zome Functions */
+  #[entry_def]
+  fn content_entry_definition() -> ValidatingEntryType {
+    content::module_entry_def()
+  }
 
-//   #[zome_fn("hc_public")]
-//   fn create_content(
-//     name: String,
-//     module_address: Address,
-//     url: String,
-//     timestamp: u64,
-//     description: String,
-//   ) -> ZomeApiResult<Address> {
-//     content::create(name, module_address, url, timestamp, description)
-//   }
+  #[zome_fn("hc_public")]
+  fn create_content(
+    name: String,
+    module_address: Address,
+    url: String,
+    timestamp: u64,
+    description: String,
+  ) -> ZomeApiResult<Address> {
+    content::create(name, module_address, url, timestamp, description)
+  }
 
-//   #[zome_fn("hc_public")]
-//   fn get_contents(module_address: Address) -> ZomeApiResult<Vec<Address>> {
-//     content::get_contents(&module_address)
-//   }
-  
-//   #[zome_fn("hc_public")]
-//   fn delete_content(content_address: Address) -> ZomeApiResult<Address> {
-//     content::delete(content_address)
-//   }
+  #[zome_fn("hc_public")]
+  fn get_contents(module_address: Address) -> ZomeApiResult<Vec<Address>> {
+    content::get_contents(&module_address)
+  }
+  #[zome_fn("hc_public")]
+  fn delete_content(content_address: Address) -> ZomeApiResult<Address> {
+    content::delete(content_address)
+  }
 
-//   #[zome_fn("hc_public")]
-//   fn update_content(
-//     content_address: Address,
-//     name: String,
-//     url: String,
-//     description: String,
-//   ) -> ZomeApiResult<Address> {
-//     content::update(content_address, name, url, description)
-//   }
+  #[zome_fn("hc_public")]
+  fn update_content(
+    content_address: Address,
+    name: String,
+    url: String,
+    description: String,
+  ) -> ZomeApiResult<Address> {
+    content::update(content_address, name, url, description)
+  }
 }

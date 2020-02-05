@@ -1,14 +1,35 @@
-use hdk::prelude::*;
-use hdk::AGENT_ADDRESS;
+/************************ Import Required Libraries */
+use hdk::{
+    entry_definition::ValidatingEntryType,
+    error::{ZomeApiError, ZomeApiResult},
+    AGENT_ADDRESS,
+};
 
-#[derive(Serialize, Deserialize, Debug, self::DefaultJson, Clone)]
+use hdk::holochain_core_types::dna::entry_types::Sharing;
+use hdk::holochain_core_types::{entry::Entry, validation::EntryValidationData};
+use holochain_wasm_utils::api_serialization::{
+    get_entry::{GetEntryOptions, GetEntryResult},
+    get_links::GetLinksOptions,
+};
+
+use hdk::holochain_json_api::{error::JsonError, json::JsonString};
+use hdk::holochain_persistence_api::cas::content::Address;
+use hdk::prelude::AddressableContent;
+use hdk::prelude::LinkMatch;
+use hdk::ValidationData;
+use std::convert::TryFrom;
+/******************************************* */
+
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Course {
-    title: String,
-    teacher_address: Address,
-    modules: Vec<Address>, // Implicit link, as relationship with module
-    timestamp: u64,
+    pub title: String,
+    pub modules: Vec<Address>,
+    pub timestamp: u64,
+    pub teacher_address: Address,
 }
+
 impl Course {
+    // Constrcuctor
     pub fn new(title: String, owner: Address, timestamp: u64) -> Self {
         Course {
             title: title,
@@ -25,24 +46,17 @@ impl Course {
             timestamp: timestamp,
         }
     }
+
     pub fn entry(&self) -> Entry {
         Entry::App("course".into(), self.into())
     }
 }
 
-/*********************** Course Validations */
-fn validate_course_title(title: &str) -> Result<(), String> {
-    if title.len() > 50 {
-        Err("Course title is too long".into())
-    } else {
-        Ok(())
-    }
-}
-
+////////////////////Course Entry Definition
 pub fn course_entry_def() -> ValidatingEntryType {
     entry!(
         name: "course",
-        description: "this is a course definition",
+        description: "this is the definition of course",
         sharing: Sharing::Public,
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
@@ -78,15 +92,16 @@ pub fn course_entry_def() -> ValidatingEntryType {
                 }
             }
         },
-        links:[
-            from!( // to query all the courses of a user(all courses that a user is the teacher or owner of)
+        links: [
+          from!( // to query all the courses of a user(all courses that a user is the teacher or owner of)
               "%agent_id",
               link_type: "teacher->courses",
               validation_package: || {
                   hdk::ValidationPackageDefinition::Entry
               }              ,
               validation: | _validation_data: hdk::LinkValidationData | {
-                 Ok(())
+                // TODO: Homework. Implement validation rules if required.
+                Ok(())
               }
           ),
           from!( // to query all courses that one user enrolled
@@ -96,10 +111,10 @@ pub fn course_entry_def() -> ValidatingEntryType {
                 hdk::ValidationPackageDefinition::Entry
             }              ,
             validation: | _validation_data: hdk::LinkValidationData | {
-               
+                // TODO: Homework. Implement validation rules if required.
                Ok(())
             }
-        ),        
+        ),
         to!( // to query all enrolled user for a course
             "%agent_id",
             link_type: "course->students",
@@ -107,10 +122,11 @@ pub fn course_entry_def() -> ValidatingEntryType {
                 hdk::ValidationPackageDefinition::Entry
             },
             validation: | _validation_data: hdk::LinkValidationData | {
+                // TODO: Homework. Implement validation rules if required.
                 Ok(())
             }
         )
-        ]
+      ]
     )
 }
 
@@ -141,28 +157,39 @@ pub fn anchor_entry_def() -> ValidatingEntryType {
     )
 }
 
+pub fn anchor_entry() -> Entry {
+    Entry::App("anchor".into(), "course".into())
+}
+
+pub fn anchor_address() -> ZomeApiResult<Address> {
+    hdk::entry_address(&anchor_entry())
+}
+
+/*********************** Course Validations */
+fn validate_course_title(title: &str) -> Result<(), String> {
+    if title.len() > 50 {
+        Err("Course title is too long".into())
+    } else {
+        Ok(())
+    }
+}
+
+/********************************************** */
+/// Course Helper Functions: CRUD
+
 pub fn create(title: String, timestamp: u64) -> ZomeApiResult<Address> {
+    let anchor_entry = anchor_entry();
+    let anchor_address = hdk::commit_entry(&anchor_entry)?; // if Anchor exist, it returns the commited one.
+
     let new_course = Course::new(title, AGENT_ADDRESS.to_string().into(), timestamp);
     let new_course_entry = new_course.entry();
     let new_course_address = hdk::commit_entry(&new_course_entry)?;
-    // TODO: to support all query we need to add some extra Entry Links:    teacher->courses   course_list
-   
-    return Ok(new_course_address);
-}
 
-pub fn get_course(_course_address: Address) -> ZomeApiResult<Option<Entry>> {
-    // Homework: finish the get course call
-    // Hint: use hdk::get_entry
+    hdk::link_entries(&AGENT_ADDRESS, &new_course_address, "teacher->courses", "")?;
 
-    Err(ZomeApiError::from(String::from("Do your homework please")))
-}
+    hdk::link_entries(&anchor_address, &new_course_address, "course_list", "")?;
 
-pub fn delete(course_address: Address) -> ZomeApiResult<Address> {
-     
-    // TODO: finish delete
-    // Course_List
-    // student->course
-    hdk::remove_entry(&course_address)
+    Ok(new_course_address)
 }
 
 pub fn update(
@@ -183,33 +210,78 @@ pub fn update(
     hdk::update_entry(new_version_course_entry, course_address)
 }
 
+pub fn delete(address: Address) -> ZomeApiResult<Address> {
+    hdk::remove_link(&anchor_address()?, &address, "course_list", "")?;
+
+    let students = get_students(address.clone())?;
+
+    for student in students {
+        hdk::remove_link(&student, &address, "student->course", "")?;
+    }
+
+    hdk::remove_entry(&address)
+}
 
 pub fn list() -> ZomeApiResult<Vec<Address>> {
-    // course_list   anchor
-    Err(ZomeApiError::from(String::from("TODO: Do your homework please")))
+    let addresses = hdk::get_links(
+        &anchor_address()?,
+        LinkMatch::Exactly("course_list"),
+        LinkMatch::Any,
+    )?
+    .addresses();
+
+    Ok(addresses)
 }
 
 pub fn get_my_courses() -> ZomeApiResult<Vec<Address>> {
-    //teacher->courses
-    Err(ZomeApiError::from(String::from("TODO: Do your homework please")))
+    let links = hdk::get_links(
+        &AGENT_ADDRESS,
+        LinkMatch::Exactly("teacher->courses"),
+        LinkMatch::Any,
+    )?;
 
+    Ok(links.addresses())
 }
 
 pub fn get_my_enrolled_courses() -> ZomeApiResult<Vec<Address>> {
-    // student->courses
-    Err(ZomeApiError::from(String::from("TODO: Do your homework please")))
-  
+    let links = hdk::get_links(
+        &AGENT_ADDRESS,
+        LinkMatch::Exactly("student->courses"),
+        LinkMatch::Any,
+    )?;
+
+    Ok(links.addresses())
 }
 
-// enroll me in a course
-pub fn enrol_in_course(_course_address: Address) -> ZomeApiResult<Address> {
-    //student->courses
-    // course->students
-    Err(ZomeApiError::from(String::from("TODO: Do your homework please")))
-
+pub fn add_module_to_course(
+    course_address: &Address,
+    module_address: &Address,
+) -> ZomeApiResult<Address> {
+    let current_course = hdk::get_entry(course_address).unwrap().unwrap();
+    if let Entry::App(_, current_course) = current_course {
+        let mut course_entry = Course::try_from(current_course.clone())
+            .expect("Entry at this address is not Course. You sent a wrong address");
+        course_entry.modules.push(module_address.clone());
+        hdk::update_entry(
+            Entry::App("course".into(), course_entry.into()),
+            course_address,
+        )
+    } else {
+        panic!("This address is not a valid address")
+    }
 }
 
-pub fn get_students(_course_address: Address) -> ZomeApiResult<Vec<Address>> {
-    // course->students
-    Err(ZomeApiError::from(String::from("TODO: Do your homework please")))
+pub fn enrol_in_course(course_address: Address) -> ZomeApiResult<Address> {
+    hdk::link_entries(&AGENT_ADDRESS, &course_address, "student->courses", "")?;
+    hdk::link_entries(&course_address, &AGENT_ADDRESS, "course->students", "")
+}
+
+pub fn get_students(course_address: Address) -> ZomeApiResult<Vec<Address>> {
+    let links = hdk::get_links(
+        &course_address,
+        LinkMatch::Exactly("course->students"),
+        LinkMatch::Any,
+    )?;
+
+    Ok(links.addresses())
 }
