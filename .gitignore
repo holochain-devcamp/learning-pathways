@@ -1,4 +1,4 @@
-dist/
+ui/dist/
 node_modules/
 target/
 .hc
