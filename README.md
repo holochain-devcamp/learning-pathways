@@ -1,8 +1,8 @@
-# hUdemy
-Udemy on Holochain.
+# LeaP - learning-pathways
 
-hUdemy is a Peer to Peer education system based on Holochain. 
+LeaP is a Peer to Peer education system based on Holochain. Developed during the first community run Holochain DevCamp #6.
 
+This repository is used as a learning resource for the students learning how to program Holochain hApps on the Rust lang.
 
 ### Running a UI (or two)
 To be able to run the UI and have a working version, follow the below steps:
