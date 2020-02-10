@@ -12,18 +12,20 @@ To be able to run the UI and have a working version, follow the below steps:
 
 #### Run two agents for demo-ing purpose:
 1. Open terminal
-2. Navigate to ui-folder
-3. Run 'npm run demo'
-4. Open browser window and visit: http://localhost:8080
-5. Open second browser window and visit: http://localhost:8081
+2. Run 'nix-shell https://holochain.love"
+3. Navigate to ui-folder
+4. Run 'npm run demo'
+5. Open browser window and visit: http://localhost:8080
+6. Open second browser window and visit: http://localhost:8081
 
 #### Run a single agent:
 1. Open terminal
-2. Navigate to ui-folder
-3. Run 'npm run hc:alice'
-4. Open another terminal
-5. Run 'npm run ui:alice'
-6. Open browser window and visit: http://localhost:8080
+2. Run 'nix-shell https://holochain.love"
+3. Navigate to ui-folder
+4. Run 'npm run hc:alice'
+5. Open another terminal
+6. Run 'npm run ui:alice'
+7. Open browser window and visit: http://localhost:8080
 
 #### Frontend Stack
 The front-end stack being used (see package.json):
