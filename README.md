@@ -4,6 +4,13 @@ LeaP is a Peer to Peer education system based on Holochain. Developed during the
 
 This repository is used as a learning resource for the students learning how to program Holochain hApps on the Rust lang.
 
+### Running the tests or package the DNA
+To be able to run the tests and package the DNA
+
+1. Run 'nix-shell https://holochain.love"
+2. Navigate to the dna-folder
+3. Run the 'hc test' command OR Run the 'hc package' command
+
 ### Running a UI (or two)
 To be able to run the UI and have a working version, follow the below steps:
 
