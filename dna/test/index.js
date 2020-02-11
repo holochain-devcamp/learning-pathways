@@ -628,6 +628,3 @@ orchestrator.registerScenario(
 );
 
 orchestrator.run();
-
-
-orchestrator.run();
