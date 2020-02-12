@@ -11,8 +11,8 @@ public_address = 'HcScj5GbxXdTq69sfnz3jcA4u5f35zftsuu5Eb3dBxHjgd9byUUW6JmN3Bvzqq
 test_agent = true
 
 [[dnas]]
-file = '/Users/adriaanb/Work/projects/holochain/_DevCamp/code/learning-pathways/dna/dist/dna.dna.json'
-hash = 'QmQDXUf9jLrVjjD1VczxGqLzSpR3g34BAwGSao4AYiejHL'
+file = '/home/friedger/_repos/github/friedger/learning-pathways/dna/dist/dna.dna.json'
+hash = 'QmXeSomKGKsxXHsmJqA4yRhVmpq72bauF9u1ehaE9QfGX1'
 id = 'hc-run-dna'
 
 [[instances]]
