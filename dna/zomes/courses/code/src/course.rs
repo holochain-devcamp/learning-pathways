@@ -68,6 +68,7 @@ pub fn course_entry_def() -> ValidatingEntryType {
                         return Err(String::from("Only the teacher can create their courses"));
                     }
 
+                    validate_teacher_is_member(&entry.teacher_address)?;
                     validate_course_title(&entry.title)
                 },
                 EntryValidationData::Modify { new_entry, old_entry, validation_data, .. } => {
@@ -166,6 +167,26 @@ pub fn anchor_address() -> ZomeApiResult<Address> {
 }
 
 /*********************** Course Validations */
+
+fn validate_teacher_is_member(teacher_address: &Address) -> ZomeApiResult<()> {
+  let is_valid_json: JsonString = hdk::call(
+      hdk::THIS_INSTANCE,
+      "members",
+      Address::from(hdk::PUBLIC_TOKEN.to_string()),
+      "is_member_valid",
+      json!({ "agent_address": teacher_address }).into(),
+  )?;
+
+  let is_valid: Result<ZomeApiResult<bool>, _> = serde_json::from_str(&is_valid_json.to_string());
+
+  match is_valid {
+      Ok(Ok(true)) => Ok(()),
+      _ => Err(ZomeApiError::from(String::from(
+          "Teacher address is not valid",
+      ))),
+  }
+}
+
 fn validate_course_title(title: &str) -> Result<(), String> {
     if title.len() > 50 {
         Err("Course title is too long".into())

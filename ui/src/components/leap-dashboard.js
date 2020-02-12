@@ -12,9 +12,6 @@ import { sharedStyles } from '../shared-styles';
 import { getClient } from '../graphql';
 import { CREATE_COURSE } from '../graphql/queries';
 import { router } from '../router';
-
-const tabs = ['enrolled-courses', 'my-courses', 'all-courses'];
-
 export class LeapDashboard extends LitElement {
   static get styles() {
     return [
@@ -46,6 +43,11 @@ export class LeapDashboard extends LitElement {
           flex: 1;
           display: flex;
         }
+
+        .members-list {
+          position: absolute;
+          right: 32px;
+        }
       `
     ];
   }
@@ -58,6 +60,9 @@ export class LeapDashboard extends LitElement {
     return {
       activeTab: {
         type: Number
+      },
+      showMembers: {
+        type: Boolean
       }
     };
   }
@@ -107,6 +112,23 @@ export class LeapDashboard extends LitElement {
       <div class="column fill" style="position: relative;">
         <mwc-top-app-bar>
           <div slot="title">Leap ${USERNAME ? '/ ' + USERNAME : ''}</div>
+          <mwc-button
+            slot="actionItems"
+            style="--mdc-theme-primary: #fff"
+            icon="group"
+            label="Members"
+            @click=${() => (this.showMembers = !this.showMembers)}
+          >
+          </mwc-button>
+          ${this.showMembers
+            ? html`
+                <leap-members-list
+                  id="members-list"
+                  class="members-list"
+                  @blur=${() => (this.showMembers = false)}
+                ></leap-members-list>
+              `
+            : html``}
         </mwc-top-app-bar>
 
         <div

@@ -29,6 +29,7 @@ export const typeDefs = gql`
     courses(filter: String!): [Course!]! @loadEntry
     course(courseId: ID!): Course! @loadEntry
     myAddress: ID!
+    validMembers: [ID!]!
   }
 
   input ContentInput {
@@ -51,6 +52,3 @@ export const typeDefs = gql`
     enrolInCourse(courseId: ID!): Course! @loadEntry
   }
 `;
-
-/*
- */

@@ -110,3 +110,9 @@ export const ENROL_IN_COURSE = gql`
     }
   }
 `;
+
+export const GET_VALID_MEMBERS = gql`
+  query GetValidMembers {
+    validMembers
+  }
+`;

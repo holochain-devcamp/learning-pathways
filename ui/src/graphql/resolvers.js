@@ -1,4 +1,4 @@
-import { INSTANCE_NAME, ZOME_NAME } from '../config';
+import { INSTANCE_NAME, COURSES_ZOME, MEMBERS_ZOME } from '../config';
 import { parseResponse } from '../utils';
 
 export const resolvers = {
@@ -11,15 +11,24 @@ export const resolvers = {
           ? 'get_my_courses'
           : 'get_all_courses';
 
-      const result = await callZome(INSTANCE_NAME, ZOME_NAME, fnName)({});
+      const result = await callZome(INSTANCE_NAME, COURSES_ZOME, fnName)({});
 
       return parseResponse(result);
     },
     async myAddress(_, __, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'get_my_address'
+      )({});
+
+      return parseResponse(result);
+    },
+    async validMembers(_, __, { callZome }) {
+      const result = await callZome(
+        INSTANCE_NAME,
+        MEMBERS_ZOME,
+        'get_valid_members'
       )({});
 
       return parseResponse(result);
@@ -29,7 +38,7 @@ export const resolvers = {
     async students(parent, _, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'get_all_students'
       )({
         course_address: parent.id
@@ -42,7 +51,7 @@ export const resolvers = {
     async contents(parent, _, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'get_contents'
       )({
         module_address: parent.id
@@ -55,7 +64,7 @@ export const resolvers = {
     async createCourse(_, { title }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'create_course'
       )({
         timestamp: getTimestamp(),
@@ -67,7 +76,7 @@ export const resolvers = {
     async updateCourse(_, { title, courseId, modulesAddresses }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'update_course'
       )({
         title,
@@ -80,7 +89,7 @@ export const resolvers = {
     async deleteCourse(_, { courseId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'delete_course'
       )({
         course_address: courseId
@@ -91,7 +100,7 @@ export const resolvers = {
     async createModule(_, { courseId, title }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'create_module'
       )({
         timestamp: getTimestamp(),
@@ -104,7 +113,7 @@ export const resolvers = {
     async updateModule(_, { moduleId, title }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'update_module'
       )({
         module_address: moduleId,
@@ -116,7 +125,7 @@ export const resolvers = {
     async deleteModule(_, { moduleId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'delete_module'
       )({
         module_address: moduleId
@@ -127,7 +136,7 @@ export const resolvers = {
     async createContent(_, { content, moduleId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'create_content'
       )({
         timestamp: getTimestamp(),
@@ -142,7 +151,7 @@ export const resolvers = {
     async updateContent(_, { content, contentId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'update_content'
       )({
         name: content.name,
@@ -156,7 +165,7 @@ export const resolvers = {
     async deleteContent(_, { contentId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'delete_content'
       )({
         content_address: contentId
@@ -167,7 +176,7 @@ export const resolvers = {
     async enrolInCourse(_, { courseId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
-        ZOME_NAME,
+        COURSES_ZOME,
         'enrol_in_course'
       )({
         course_address: courseId
