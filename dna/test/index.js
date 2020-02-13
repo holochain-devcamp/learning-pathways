@@ -2,7 +2,6 @@
 /// See the tryorama README [https://github.com/holochain/tryorama]
 /// for a potentially more accurate example
 
-
 const path = require("path");
 
 const {
@@ -22,10 +21,7 @@ process.on("unhandledRejection", error => {
 const dnaPath = path.join(__dirname, "../dist/dna.dna.json");
 
 const orchestrator = new Orchestrator({
-  middleware: combine(
-    tapeExecutor(require("tape")),
-    localOnly
-  )
+  middleware: combine(tapeExecutor(require("tape")), localOnly)
 });
 
 const dna = Config.dna(dnaPath, "course_dna");
@@ -36,12 +32,11 @@ const conductorConfig = Config.gen(
       type: "sim2h",
       sim2h_url: "ws://localhost:9000"
     },
-    logger: Config.logger({ type: "error" }),
+    logger: Config.logger({ type: "error" })
   }
 );
 
-
-orchestrator.registerScenario("Write you scenario here", async (s, t) => {
+orchestrator.registerScenario("Can create courses", async (s, t) => {
   const { alice, bob } = await s.players(
     { alice: conductorConfig, bob: conductorConfig },
     true
@@ -74,21 +69,27 @@ orchestrator.registerScenario("Write you scenario here", async (s, t) => {
   t.ok(course_addr_2.Ok);
   await s.consistency();
 
-  const all_courses_alice = await alice.call("course_dna", "courses", "get_my_courses", {
-  });
+  const all_courses_alice = await alice.call(
+    "course_dna",
+    "courses",
+    "get_my_courses",
+    {}
+  );
 
   t.true(all_courses_alice.Ok[0] != null);
   t.true(all_courses_alice.Ok[1] != null);
 
-  const all_courses_bob = await bob.call("course_dna", "courses", "get_all_courses", {
-  });
-  t.true(all_courses_alice.Ok[0] != null);
-  t.true(all_courses_alice.Ok[1] != null);
+  const all_courses_bob = await bob.call(
+    "course_dna",
+    "courses",
+    "get_all_courses",
+    {}
+  );
+  t.true(all_courses_bob.Ok[0] != null);
+  t.true(all_courses_bob.Ok[1] != null);
 
   await s.consistency();
-
 });
-
 
 /*
 orchestrator.registerScenario("Scenario1: Create new course", async (s, t) => {

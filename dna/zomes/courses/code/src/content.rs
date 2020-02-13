@@ -25,7 +25,7 @@ pub struct Content {
     url: String,
     description: String,
     timestamp: u64,
-    module_address: Address,
+    pub module_address: Address,
 }
 
 impl Content {
