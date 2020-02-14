@@ -2,6 +2,7 @@ import gql from 'graphql-tag';
 
 export const GET_COURSES = gql`
   query GetCourses($filter: String!) {
+    myAddress
     courses(filter: $filter) {
       id
       title

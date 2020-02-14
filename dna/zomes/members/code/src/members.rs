@@ -15,6 +15,5 @@ pub fn get_valid_members() -> ZomeApiResult<Vec<Address>> {
 
 pub fn is_member_valid(agent_address: &Address) -> ZomeApiResult<bool> {
     let valid_members = get_valid_members()?;
-
     Ok(valid_members.contains(agent_address))
 }

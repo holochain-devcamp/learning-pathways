@@ -25,13 +25,17 @@ export const resolvers = {
       return parseResponse(result);
     },
     async validMembers(_, __, { callZome }) {
-      const result = await callZome(
-        INSTANCE_NAME,
-        MEMBERS_ZOME,
-        'get_valid_members'
-      )({});
-
-      return parseResponse(result);
+      try {
+        const result = await callZome(
+          INSTANCE_NAME,
+          MEMBERS_ZOME,
+          'get_valid_members'
+        )({});
+        console.log(result);
+        return parseResponse(result);
+      } catch (e) {
+        console.log(e);
+      }
     }
   },
   Course: {

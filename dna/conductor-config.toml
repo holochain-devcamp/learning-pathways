@@ -5,14 +5,14 @@ ui_interfaces = []
 
 [[agents]]
 id = 'hc-run-agent'
-keystore_file = 'bob'
-name = 'bob'
-public_address = 'HcScj5GbxXdTq69sfnz3jcA4u5f35zftsuu5Eb3dBxHjgd9byUUW6JmN3Bvzqqr'
+keystore_file = 'testAgent'
+name = 'testAgent'
+public_address = 'HcScjN8wBwrn3tuyg89aab3a69xsIgdzmX5P9537BqQZ5A7TEZu7qCY4Xzzjhma'
 test_agent = true
 
 [[dnas]]
 file = '/home/friedger/_repos/github/friedger/learning-pathways/dna/dist/dna.dna.json'
-hash = 'QmXeSomKGKsxXHsmJqA4yRhVmpq72bauF9u1ehaE9QfGX1'
+hash = 'QmWZDiqx7GQguCEwWKZxwCY5WRD4YPNkdDrxKZYyKXkS5S'
 id = 'hc-run-dna'
 
 [[instances]]
@@ -31,7 +31,7 @@ id = 'websocket-interface'
 id = 'test-instance'
 
 [interfaces.driver]
-port = 8889
+port = 8888
 type = 'websocket'
 
 [logger]
@@ -40,10 +40,6 @@ type = 'debug'
 
 [logger.rules]
 rules = []
-
-[network]
-sim2h_url = 'ws://localhost:9000'
-type = 'sim2h'
 
 [passphrase_service]
 type = 'cmd'

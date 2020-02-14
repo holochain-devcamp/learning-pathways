@@ -42,6 +42,8 @@ export class LeapCoursesList extends LitElement {
 
     this.courses = result.data.courses;
 
+    console.log(result.data.myAddress);
+
     if (this.courses.length > 0) {
       this.selectedCourseId = this.courses[0].id;
     }

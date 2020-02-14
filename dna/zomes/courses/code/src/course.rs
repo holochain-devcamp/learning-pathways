@@ -101,7 +101,6 @@ pub fn course_entry_def() -> ValidatingEntryType {
                   hdk::ValidationPackageDefinition::Entry
               }              ,
               validation: | _validation_data: hdk::LinkValidationData | {
-                // TODO: Homework. Implement validation rules if required.
                 Ok(())
               }
           ),
@@ -112,7 +111,6 @@ pub fn course_entry_def() -> ValidatingEntryType {
                 hdk::ValidationPackageDefinition::Entry
             }              ,
             validation: | _validation_data: hdk::LinkValidationData | {
-                // TODO: Homework. Implement validation rules if required.
                Ok(())
             }
         ),
@@ -123,7 +121,6 @@ pub fn course_entry_def() -> ValidatingEntryType {
                 hdk::ValidationPackageDefinition::Entry
             },
             validation: | _validation_data: hdk::LinkValidationData | {
-                // TODO: Homework. Implement validation rules if required.
                 Ok(())
             }
         )
