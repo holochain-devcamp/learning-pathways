@@ -1,7 +1,8 @@
 import { LitElement, html } from 'lit-element';
 
 import '@authentic/mwc-card';
-import '@authentic/mwc-list';
+import '@material/mwc-list';
+import '@material/mwc-list/mwc-list-item';
 import '@authentic/mwc-circular-progress';
 
 import { router } from '../router';
