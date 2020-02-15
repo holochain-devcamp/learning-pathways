@@ -18,7 +18,7 @@ module.exports = {
   plugins: [
     ...config.plugins,
     new webpack.EnvironmentPlugin({
-      HC_PORT: process.env.HC_PORT,
+      WS_INTERFACE: process.env.WS_INTERFACE,
       USERNAME: process.env.USERNAME
     })
   ]

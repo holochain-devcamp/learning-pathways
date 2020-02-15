@@ -4,8 +4,8 @@
     "start": "webpack-dev-server --watch",
     "hc:alice": "cd ../dna && hc run --agent-name alice --networked sim2h",
     "hc:bob": "cd ../dna && hc run --agent-name bob -p 8889 --networked sim2h",
-    "ui:alice": "HC_PORT=8888 USERNAME=Alice webpack-dev-server --port 8080",
-    "ui:bob": "HC_PORT=8889 USERNAME=Bob webpack-dev-server --port 8081",
+    "ui:alice": "WS_INTERFACE=ws://localhost:8888 USERNAME=Alice webpack-dev-server --port 8080",
+    "ui:bob": "WS_INTERFACE=ws://localhost:8889 USERNAME=Bob webpack-dev-server --port 8081",
     "demo": "concurrently \"sim2h_server\" \"npm run hc:alice\" \"npm run hc:bob\" \"npm run ui:alice\" \"npm run ui:bob\" "
   },
   "devDependencies": {
