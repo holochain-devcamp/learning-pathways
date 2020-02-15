@@ -106,7 +106,7 @@ export class LeapDashboard extends LitElement {
       ${this.renderCreateCourseDialog()}
       <div class="column fill" style="position: relative;">
         <mwc-top-app-bar>
-          <div slot="title">Leap ${USERNAME ? '/ ' + USERNAME : ''}</div>
+          <div slot="title">LeaP ${USERNAME ? '/ ' + USERNAME : ''}</div>
         </mwc-top-app-bar>
 
         <div
