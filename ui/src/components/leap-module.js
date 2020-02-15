@@ -13,8 +13,8 @@ import { sharedStyles } from '../shared-styles';
 import { getClient } from '../graphql';
 import {
   UPDATE_MODULE,
-  CREATE_CONTENT,
   DELETE_MODULE,
+  CREATE_CONTENT,
   DELETE_CONTENT,
   UPDATE_CONTENT
 } from '../graphql/queries';
@@ -66,9 +66,10 @@ export class LeapModule extends LitElement {
     const client = await getClient();
 
     if (this.editingContent.id) {
-      client.mutate({
+      await client.mutate({
         mutation: UPDATE_CONTENT,
         variables: {
+          courseId: this.courseId,
           contentId: this.editingContent.id,
           content: {
             name: this.editingContent.name,
@@ -78,9 +79,10 @@ export class LeapModule extends LitElement {
         }
       });
     } else {
-      client.mutate({
+      await client.mutate({
         mutation: CREATE_CONTENT,
         variables: {
+          courseId: this.courseId,
           moduleId: this.module.id,
           content: {
             name: this.editingContent.name,
@@ -91,46 +93,49 @@ export class LeapModule extends LitElement {
       });
     }
 
-    window.location.reload();
+    this.dispatchEvent(new CustomEvent('course-updated', { composed: true }));
   }
 
   async updateModule() {
     this.editingTitle = false;
 
     const client = await getClient();
-    client.mutate({
+    await client.mutate({
       mutation: UPDATE_MODULE,
       variables: {
+        courseId: this.courseId,
         moduleId: this.module.id,
         title: this.renameModule
       }
     });
 
-    window.location.reload();
+    this.dispatchEvent(new CustomEvent('course-updated', { composed: true }));
   }
 
   async deleteModule() {
     const client = await getClient();
-    client.mutate({
+    await client.mutate({
       mutation: DELETE_MODULE,
       variables: {
+        courseId: this.courseId,
         moduleId: this.module.id
       }
     });
 
-    window.location.reload();
+    this.dispatchEvent(new CustomEvent('course-updated', { composed: true }));
   }
 
   async deleteContent(contentId) {
     const client = await getClient();
-    client.mutate({
+    await client.mutate({
       mutation: DELETE_CONTENT,
       variables: {
+        courseId: this.courseId,
         contentId: contentId
       }
     });
 
-    window.location.reload();
+    this.dispatchEvent(new CustomEvent('course-updated', { composed: true }));
   }
 
   showContentDialog(existingContent) {

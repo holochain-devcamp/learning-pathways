@@ -99,9 +99,11 @@ export const resolvers = {
         title
       });
 
-      return parseResponse(result);
+      return new Promise(resolve => {
+        setTimeout(() => resolve(courseId), 300);
+      });
     },
-    async updateModule(_, { moduleId, title }, { callZome }) {
+    async updateModule(_, { courseId, moduleId, title }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
         ZOME_NAME,
@@ -111,9 +113,11 @@ export const resolvers = {
         title
       });
 
-      return parseResponse(result);
+      return new Promise(resolve => {
+        setTimeout(() => resolve(courseId), 300);
+      });
     },
-    async deleteModule(_, { moduleId }, { callZome }) {
+    async deleteModule(_, { courseId, moduleId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
         ZOME_NAME,
@@ -122,9 +126,11 @@ export const resolvers = {
         module_address: moduleId
       });
 
-      return parseResponse(result);
+      return new Promise(resolve => {
+        setTimeout(() => resolve(courseId), 300);
+      });
     },
-    async createContent(_, { content, moduleId }, { callZome }) {
+    async createContent(_, { courseId, content, moduleId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
         ZOME_NAME,
@@ -137,9 +143,11 @@ export const resolvers = {
         description: content.description
       });
 
-      return parseResponse(result);
+      return new Promise(resolve => {
+        setTimeout(() => resolve(courseId), 300);
+      });
     },
-    async updateContent(_, { content, contentId }, { callZome }) {
+    async updateContent(_, { courseId, content, contentId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
         ZOME_NAME,
@@ -151,9 +159,11 @@ export const resolvers = {
         description: content.description
       });
 
-      return parseResponse(result);
+      return new Promise(resolve => {
+        setTimeout(() => resolve(courseId), 300);
+      });
     },
-    async deleteContent(_, { contentId }, { callZome }) {
+    async deleteContent(_, { courseId, contentId }, { callZome }) {
       const result = await callZome(
         INSTANCE_NAME,
         ZOME_NAME,
@@ -162,7 +172,9 @@ export const resolvers = {
         content_address: contentId
       });
 
-      return parseResponse(result);
+      return new Promise(resolve => {
+        setTimeout(() => resolve(courseId), 300);
+      });
     },
     async enrolInCourse(_, { courseId }, { callZome }) {
       const result = await callZome(
