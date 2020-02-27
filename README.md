@@ -4,6 +4,8 @@ LeaP is a Peer to Peer education system based on Holochain. Developed during the
 
 This repository is used as a learning resource for the students learning how to program Holochain hApps on the Rust lang.
 
+Design: https://hackmd.io/_Uvrwr1HSNmfsWHqymcgvA
+
 ### Running the tests or package the DNA
 To be able to run the tests and package the DNA
 
