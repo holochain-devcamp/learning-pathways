@@ -12,6 +12,9 @@ import { sharedStyles } from '../shared-styles';
 import { getClient } from '../graphql';
 import { CREATE_COURSE } from '../graphql/queries';
 import { router } from '../router';
+
+const tabs = ['enrolled-courses', 'my-courses', 'all-courses'];
+
 export class LeapDashboard extends LitElement {
   static get styles() {
     return [
@@ -111,7 +114,7 @@ export class LeapDashboard extends LitElement {
       ${this.renderCreateCourseDialog()}
       <div class="column fill" style="position: relative;">
         <mwc-top-app-bar>
-          <div slot="title">Leap ${USERNAME ? '/ ' + USERNAME : ''}</div>
+          <div slot="title">LeaP ${USERNAME ? '/ ' + USERNAME : ''}</div>
           <mwc-button
             slot="actionItems"
             style="--mdc-theme-primary: #fff"

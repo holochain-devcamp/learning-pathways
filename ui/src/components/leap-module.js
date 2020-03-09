@@ -1,18 +1,20 @@
 import { LitElement, html, css } from 'lit-element';
 
 import '@authentic/mwc-card';
-import '@authentic/mwc-list';
+import '@material/mwc-list';
+import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-dialog';
 import '@material/mwc-textfield';
 import '@material/mwc-textarea';
+import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 
 import { sharedStyles } from '../shared-styles';
 import { getClient } from '../graphql';
 import {
   UPDATE_MODULE,
-  CREATE_CONTENT,
   DELETE_MODULE,
+  CREATE_CONTENT,
   DELETE_CONTENT,
   UPDATE_CONTENT
 } from '../graphql/queries';
@@ -53,15 +55,6 @@ export class LeapModule extends LitElement {
           font-size: 18px;
         }
 
-        hr {
-          padding: 0;
-          margin: 0;
-        }
-
-        .content-item {
-          padding: 4px;
-        }
-
         .action {
           --mdc-icon-button-size: 40px;
         }
@@ -73,9 +66,10 @@ export class LeapModule extends LitElement {
     const client = await getClient();
 
     if (this.editingContent.id) {
-      client.mutate({
+      await client.mutate({
         mutation: UPDATE_CONTENT,
         variables: {
+          courseId: this.courseId,
           contentId: this.editingContent.id,
           content: {
             name: this.editingContent.name,
@@ -85,9 +79,10 @@ export class LeapModule extends LitElement {
         }
       });
     } else {
-      client.mutate({
+      await client.mutate({
         mutation: CREATE_CONTENT,
         variables: {
+          courseId: this.courseId,
           moduleId: this.module.id,
           content: {
             name: this.editingContent.name,
@@ -98,46 +93,49 @@ export class LeapModule extends LitElement {
       });
     }
 
-    window.location.reload();
+    this.dispatchEvent(new CustomEvent('course-updated', { composed: true }));
   }
 
   async updateModule() {
     this.editingTitle = false;
 
     const client = await getClient();
-    client.mutate({
+    await client.mutate({
       mutation: UPDATE_MODULE,
       variables: {
+        courseId: this.courseId,
         moduleId: this.module.id,
         title: this.renameModule
       }
     });
 
-    window.location.reload();
+    this.dispatchEvent(new CustomEvent('course-updated', { composed: true }));
   }
 
   async deleteModule() {
     const client = await getClient();
-    client.mutate({
+    await client.mutate({
       mutation: DELETE_MODULE,
       variables: {
+        courseId: this.courseId,
         moduleId: this.module.id
       }
     });
 
-    window.location.reload();
+    this.dispatchEvent(new CustomEvent('course-updated', { composed: true }));
   }
 
   async deleteContent(contentId) {
     const client = await getClient();
-    client.mutate({
+    await client.mutate({
       mutation: DELETE_CONTENT,
       variables: {
+        courseId: this.courseId,
         contentId: contentId
       }
     });
 
-    window.location.reload();
+    this.dispatchEvent(new CustomEvent('course-updated', { composed: true }));
   }
 
   showContentDialog(existingContent) {
@@ -178,7 +176,6 @@ export class LeapModule extends LitElement {
           >
           </mwc-textfield>
         </div>
-
         <mwc-button
           slot="primaryAction"
           dialogAction="create"
@@ -186,6 +183,19 @@ export class LeapModule extends LitElement {
         >
           Create
         </mwc-button>
+        ${this.editable
+          ? html`
+              <mwc-button
+                slot="secondaryAction"
+                dialogAction="cancel"
+                label="Delete"
+                @click=${e => {
+                  e.stopPropagation();
+                  this.deleteContent(this.editingContent.id);
+                }}
+              ></mwc-button>
+            `
+          : html``}
         <mwc-button slot="secondaryAction" dialogAction="cancel">
           Cancel
         </mwc-button>
@@ -274,40 +284,29 @@ export class LeapModule extends LitElement {
       <mwc-list-item
         @click=${() => window.open(content.url)}
         class="content-item"
+        hasMeta
+        twoline
       >
-        <div class="row">
-          <div class="column" style="flex: 1;">
-            <span class="content-title">${content.name}</span>
-            <span class="fading">${content.description}</span>
-          </div>
+        <span class="content-title">${content.name}</span>
+        <span slot="secondary">${content.description}</span>
 
-          ${this.editable
-            ? html`
-                <div class="row">
-                  <mwc-icon-button
-                    icon="edit"
-                    label="Edit content"
-                    @click=${e => {
-                      e.stopPropagation();
-                      this.showContentDialog(content);
-                    }}
-                  ></mwc-icon-button>
-                  <mwc-icon-button
-                    icon="delete"
-                    label="Delete content"
-                    @click=${e => {
-                      e.stopPropagation();
-                      this.deleteContent(content.id);
-                    }}
-                  ></mwc-icon-button>
-                </div>
-              `
-            : html``}
-        </div>
+        ${this.editable
+          ? html`
+              <mwc-icon
+                slot="meta"
+                label="Edit content"
+                @click=${e => {
+                  e.stopPropagation();
+                  this.showContentDialog(content);
+                }}
+                >edit</mwc-icon
+              >
+            `
+          : html``}
       </mwc-list-item>
       ${index !== this.module.contents.length - 1
         ? html`
-            <hr style="opacity: 0.6" />
+            <li divider padded role="separator"></li>
           `
         : html``}
     `;
@@ -328,11 +327,9 @@ export class LeapModule extends LitElement {
               `
             : html`
                 <mwc-list style="padding-top: 8px; padding-bottom: 8px;">
-                  <div class="content-list">
-                    ${this.module.contents.map((content, index) =>
-                      this.renderContent(content, index)
-                    )}
-                  </div>
+                  ${this.module.contents.map((content, index) =>
+                    this.renderContent(content, index)
+                  )}
                 </mwc-list>
               `}
         </div>

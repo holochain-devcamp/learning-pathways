@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit-element';
 
 import '@authentic/mwc-circular-progress';
 import '@authentic/mwc-card';
-import '@authentic/mwc-list';
+import '@material/mwc-list';
 
 import { sharedStyles } from '../shared-styles';
 import { getClient } from '../graphql';

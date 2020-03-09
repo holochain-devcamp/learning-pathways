@@ -10,7 +10,7 @@ const { createDefaultConfig } = require('@open-wc/building-webpack');
 
 const config = createDefaultConfig({
   input: path.resolve(__dirname, './index.html'),
-  mode: 'development'
+  mode: process.env.PRODUCTION ? 'production' : 'development'
 });
 
 module.exports = {
@@ -18,7 +18,8 @@ module.exports = {
   plugins: [
     ...config.plugins,
     new webpack.EnvironmentPlugin({
-      HC_PORT: process.env.HC_PORT,
+      WS_INTERFACE: process.env.WS_INTERFACE,
+      PRODUCTION: process.env.PRODUCTION,
       USERNAME: process.env.USERNAME
     })
   ]

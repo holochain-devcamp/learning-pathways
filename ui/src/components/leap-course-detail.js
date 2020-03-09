@@ -57,6 +57,7 @@ export class LeapCourseDetail extends LitElement {
 
   firstUpdated() {
     this.loadCourse();
+    this.addEventListener('course-updated', () => this.loadCourse());
   }
 
   updated(changedValues) {
@@ -86,7 +87,7 @@ export class LeapCourseDetail extends LitElement {
       ]
     });
 
-    window.location.reload();
+    this.loadCourse();
   }
 
   renderCreateModuleDialog() {
@@ -129,6 +130,7 @@ export class LeapCourseDetail extends LitElement {
           module =>
             html`
               <leap-module
+                .courseId=${this.courseId}
                 .module=${module}
                 .editable=${this.userIsTeacher()}
                 style="padding-bottom: 24px;"

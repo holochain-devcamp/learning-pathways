@@ -1,0 +1,16 @@
+bridges = []
+
+[[instances]]
+name = "learning-pathways"
+id = "learning-pathways-instance"
+dna_hash = "QmdEvz12chBPBrpJB7KZDeh2waTArfuqmnMRrjtDxuQLUg"
+uri = "file:./dna/dist/dna.dna.json"
+
+[[UIs]]
+name = "Learning Pathways"
+id = "leap-ui"
+uri = "file:./ui.zip"
+
+[[UIs.instance_references]]
+ui_handle = "learning-pathways"
+instance_id = "learning-pathways-instance"
