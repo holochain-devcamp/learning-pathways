@@ -1,0 +1,16 @@
+bridges = []
+
+[[instances]]
+name = "leap"
+id = "__leap"
+dna_hash = "QmPbUDNWg2mW4HbAMYZv4nxhHTjZaKCgv4CgQzQ1yzWhp6"
+uri = "file:./dna/dist/dna.dna.json"
+
+[[UIs]]
+name = "Leap Frontend"
+id = "leap_ui"
+uri = "file:./ui/dist.zip"
+
+[[UIs.instance_references]]
+ui_handle = "test-instance"
+instance_id = "__leap"

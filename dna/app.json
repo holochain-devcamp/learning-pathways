@@ -1,6 +1,6 @@
 {
-  "name": "Holochain App Name",
-  "description": "A Holochain app",
+  "name": "Learning Pathway",
+  "description": "Decentralized learning platform",
   "authors": [
     {
       "identifier": "Author Name <author@name.com>",
@@ -10,5 +10,13 @@
   ],
   "version": "0.1.0",
   "dht": {},
-  "properties": null
+  "properties": {
+    "valid_members": [
+      "HcScjwa89epCAea9r8tUIRrj35ixri378CehkGxW98Nu5c3xvn87NvUbovxpxei",
+      "HcScIWQx7b9vA6qcmeGt6cUu3gSnfiph4gvgSGDDwotfnpmom9ordxV9HX8rfoa",
+      "HcScj5GbxXdTq69sfnz3jcA4u5f35zftsuu5Eb3dBxHjgd9byUUW6JmN3Bvzqqr",
+      "HcScjN8wBwrn3tuyg89aab3a69xsIgdzmX5P9537BqQZ5A7TEZu7qCY4Xzzjhma",
+      "HcSCIyAYVSdghmv59tJx6VzbR9rNai6y7IYV7AAjczp7dxmb959mCs3uXoPHptr"
+    ]
+  }
 }

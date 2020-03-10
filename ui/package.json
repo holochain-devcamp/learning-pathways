@@ -2,6 +2,7 @@
   "scripts": {
     "build": "PRODUCTION=true webpack --mode=production",
     "start": "WS_INTERFACE=ws://localhost:8888 webpack-dev-server --watch",
+    "hc": "cd ../dna && holochain -c conductor-config.toml",
     "hc:alice": "cd ../dna && hc run --agent-name alice --networked sim2h",
     "hc:bob": "cd ../dna && hc run --agent-name bob -p 8889 --networked sim2h",
     "ui:alice": "WS_INTERFACE=ws://localhost:8888 USERNAME=Alice webpack-dev-server --port 8080",

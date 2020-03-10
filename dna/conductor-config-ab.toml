@@ -12,7 +12,7 @@ test_agent = true
 
 [[dnas]]
 file = '/home/friedger/_repos/github/friedger/learning-pathways/dna/dist/dna.dna.json'
-hash = 'QmWZDiqx7GQguCEwWKZxwCY5WRD4YPNkdDrxKZYyKXkS5S'
+hash = 'QmPPwJkQ1tAC76MsE65sGqNkrXjwPPXELgwRWgAEWnFxVg'
 id = 'hc-run-dna'
 
 [[instances]]

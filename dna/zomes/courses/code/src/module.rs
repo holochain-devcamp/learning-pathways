@@ -2,6 +2,7 @@
 use hdk::prelude::*;
 
 use crate::course::Course;
+use crate::content::Content;
 use std::convert::TryFrom;
 /******************************************* */
 
@@ -87,9 +88,24 @@ pub fn entry_def() -> ValidatingEntryType {
                 validation_package:||{
                     hdk::ValidationPackageDefinition::Entry
                 },
-                validation:|_validation_data: hdk::LinkValidationData|{
-                // TODO: Homework. Implement validation rules if required.
-                    Ok(())
+                validation:| validation_data: hdk::LinkValidationData|{
+                  match validation_data {
+                    LinkValidationData::LinkAdd { link, ..} => {
+                      let base: Address = link.link.base().clone();
+                      let content: Content = hdk::utils::get_as_type(base.clone())?;
+
+                      if base != content.module_address {
+                          return Err(String::from(
+                              "Content can only be linked to the designated module",
+                          ));
+                      }
+
+                      Ok(())
+                    },
+                    LinkValidationData::LinkRemove { ..} => {
+                      Ok(())
+                    }
+                  }
                 }
             )
         ]

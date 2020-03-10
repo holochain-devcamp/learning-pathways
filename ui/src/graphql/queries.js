@@ -2,6 +2,7 @@ import gql from 'graphql-tag';
 
 export const GET_COURSES = gql`
   query GetCourses($filter: String!) {
+    myAddress
     courses(filter: $filter) {
       id
       title
@@ -197,5 +198,11 @@ export const ENROL_IN_COURSE = gql`
       title
       students
     }
+  }
+`;
+
+export const GET_VALID_MEMBERS = gql`
+  query GetValidMembers {
+    validMembers
   }
 `;
