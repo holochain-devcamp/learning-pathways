@@ -27,6 +27,7 @@ pub struct CourseData {
     pub modules: Vec<Address>,
     pub timestamp: u64,
     pub teacher_address: Address,
+    // Store reference to the corresponding CourseAnchor to save resources on lookup
     pub course_anchor: Address,
 }
 
@@ -98,7 +99,7 @@ impl CourseAnchor {
     }
 }
 
-////////////////////CourseAnchor Definition
+/* *************** CourseAnchor HDK entry definition */
 pub fn course_anchor_def() -> ValidatingEntryType {
     entry!(
         name: "course_anchor",
@@ -110,35 +111,20 @@ pub fn course_anchor_def() -> ValidatingEntryType {
         validation: | validation_data: hdk::EntryValidationData<CourseAnchor>| {
             match validation_data{
                 EntryValidationData::Create { entry, validation_data } => {
-                    if !validation_data.sources().contains(&entry.teacher_address) {
-                        return Err(String::from("Only the teacher can create their courses"));
-                    }
-
-                    Ok(())
+                    validate_only_teacher_can_do(validation_data.sources(), &entry.teacher_address, "create")
                 },
                 EntryValidationData::Modify { new_entry, old_entry, validation_data, .. } => {
-                    if new_entry.teacher_address != old_entry.teacher_address {
-                        return Err(String::from("Cannot change the teacher of the course"));
-                    }
-
-                    if !validation_data.sources().contains(&old_entry.teacher_address) {
-                        return Err(String::from("Only the teacher can modify their courses"));
-                    }
-
-                    Ok(())
+                    validate_no_teacher_change(&old_entry.teacher_address, &new_entry.teacher_address)?;
+                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "modify")
                 },
                 EntryValidationData::Delete {old_entry, validation_data, .. } => {
-                    if !validation_data.sources().contains(&old_entry.teacher_address) {
-                        return Err(String::from("Only the teacher can delete their courses"));
-                    }
-
-                    Ok(())
+                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "delete")
                 }
             }
         },
         links: [
             to!( // to query this course's latest data
-                "%agent_id", // QUESTION: what should I specify here?
+                "course_anchor",
                 link_type: "course_anchor->course_data",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
@@ -186,6 +172,7 @@ pub fn course_anchor_def() -> ValidatingEntryType {
     )
 }
 
+/* *************** CourseData HDK entry definition */
 pub fn course_data_def() -> ValidatingEntryType {
     entry!(
         name: "course_data",
@@ -196,14 +183,16 @@ pub fn course_data_def() -> ValidatingEntryType {
         },
         validation: | validation_data: hdk::EntryValidationData<CourseData>| {
             match validation_data{
-                EntryValidationData::Create { new_entry, .. } => {
-                    validate_course_title(&new_entry.title)
+                EntryValidationData::Create { entry, validation_data } => {
+                    validate_course_title(&entry.title)?;
+                    validate_only_teacher_can_do(validation_data.sources(), &entry.teacher_address, "create")
                 },
-                EntryValidationData::Modify { entry, .. } => {
-                    validate_course_title(&entry.title)
+                EntryValidationData::Modify { new_entry, old_entry, validation_data, .. } => {
+                    validate_course_title(&new_entry.title)?;
+                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "modify")
                 },
-                EntryValidationData::Delete { .. } => {
-                    Ok(())
+                EntryValidationData::Delete { old_entry, validation_data, .. } => {
+                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "delete")
                 }
             }
         },
@@ -211,7 +200,41 @@ pub fn course_data_def() -> ValidatingEntryType {
     )
 }
 
-//// Anchor for all courses definition : This Anchor will be used to query all courses
+
+/* *************** Course Validations */
+fn validate_course_title(title: &str) -> Result<(), String> {
+    if title.len() > 50 {
+        Err("Course title is too long".into())
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_only_teacher_can_do(
+    validation_data_sources: Vec<Address>,
+    teacher_addr: &Address,
+    action_name: &str,
+) -> Result<(), String> {
+    if !validation_data_sources.contains(teacher_addr) {
+        return Err(format!("Only the teacher can {} their courses", action_name));
+    }
+    Ok(())
+}
+
+fn validate_no_teacher_change(
+    old_teacher_addr: &Address,
+    new_teacher_addr: &Address,
+) -> Result<(), String> {
+    if old_teacher_addr != new_teacher_addr {
+        return Err(String::from("Cannot change the teacher of the course"));
+    }
+    Ok(())
+}
+
+/* ********************************************* */
+
+/* *************** Anchor for all courses HDK entry definition */
+// This Anchor will be used to query all available courses
 pub fn anchor_all_courses_entry_def() -> ValidatingEntryType {
     entry!(
         name: "anchor-all-courses",
@@ -238,6 +261,7 @@ pub fn anchor_all_courses_entry_def() -> ValidatingEntryType {
     )
 }
 
+/* *************** Anchor for all courses helper functions for HDK entry */
 pub fn anchor_all_courses_entry() -> Entry {
     Entry::App("anchor-all-courses".into(), "course_anchor".into())
 }
@@ -245,19 +269,10 @@ pub fn anchor_all_courses_entry() -> Entry {
 pub fn anchor_all_courses_address() -> ZomeApiResult<Address> {
     hdk::entry_address(&anchor_all_courses_entry())
 }
+/* ********************************************* */
 
-/*********************** Course Validations */
-fn validate_course_title(title: &str) -> Result<(), String> {
-    if title.len() > 50 {
-        Err("Course title is too long".into())
-    } else {
-        Ok(())
-    }
-}
 
-/********************************************** */
-/// Course Helper Functions: CRUD
-
+/* *************** Course Helper Functions: CRUD */
 pub fn create(title: String, timestamp: u64) -> ZomeApiResult<Address> {
     // create anchor for all courses
     // it's an idempotent action that won't change anything if this anchor already exists in DHT
@@ -283,7 +298,7 @@ pub fn create(title: String, timestamp: u64) -> ZomeApiResult<Address> {
     .entry();
     let course_data_address = hdk::commit_entry(&course_data_entry)?;
 
-    // link CourseData to CourseAnchor entry to be discoverable
+    // link CourseAnchor to the CourseData entry for it to be discoverable
     hdk::link_entries(
         &course_anchor_address,
         &course_data_address,
@@ -299,6 +314,8 @@ pub fn update(
     modules_addresses: Vec<Address>,
     course_address: &Address,
 ) -> ZomeApiResult<Address> {
+    //TODO:  check if addr we receive is actually CourseAnchor, not CourseData
+
     // get latest CourseData entry by looking at links of CourseAnchor entry
     let latest_course_data_addr =
         get_latest_link_addr(course_address, "course_anchor->course_data")?;
@@ -316,7 +333,6 @@ pub fn update(
     .entry();
     let new_course_data_address = hdk::commit_entry(&new_course_data_entry)?;
 
-    // link this new CourseData to CourseAnchor for it to be discoverable
     hdk::link_entries(
         &course_address,
         &new_course_data_address,
@@ -331,6 +347,8 @@ pub fn update(
 }
 
 pub fn delete(course_address: Address) -> ZomeApiResult<Address> {
+    //TODO:  check if addr we receive is actually CourseAnchor, not CourseData
+
     // remove link from all_courses anchor to this course's CourseAnchor entry
     hdk::remove_link(
         &anchor_all_courses_address()?,
@@ -339,7 +357,7 @@ pub fn delete(course_address: Address) -> ZomeApiResult<Address> {
         "",
     )?;
 
-    // retrieve all CourseData for the course
+    // find addresses of all CourseData entries for the course
     let course_data_addresses = hdk::get_links(
         &course_address,
         LinkMatch::Exactly("course_anchor->course_data"),
@@ -373,7 +391,7 @@ pub fn list() -> ZomeApiResult<Vec<Address>> {
     // TODO: need to refactor the way UI would be handling CourseData.
     // In the current implementation, UI would try to get addr of CourseData and pass it
     // to all Course helper functions, while they're expecting only CourseAnchor addresses.
-    // Since these have the same datatype, it won't be cathed by Rust compiler or any other automated
+    // Since these have the same datatype, it won't be catched by Rust compiler or any other automated
     // methods and would only fail when trying to treat CourseData as CourseAnchor.
 
     // first, retrieve addresses of all CourseAnchor entries
@@ -397,10 +415,10 @@ pub fn list() -> ZomeApiResult<Vec<Address>> {
     // contains address of the corresponding CourseAnchor and there's no point in repeating this information
     Ok(course_data_addr_vec)
 }
+/* ********************************************* */
 
-/********************************************** */
-/// Course Helper Functions: Other
 
+/* *************** Course Helper Functions: Other */
 pub fn get_latest_link_addr(base_address: &Address, link_name: &str) -> ZomeApiResult<Address> {
     // NOTE: this method is written with an assumption that we'll always have ordered links vector
     // where latest links are appended to it's end.
@@ -458,7 +476,6 @@ pub fn add_module_to_course(
         // commit new course_data
         let updated_course_data_address = hdk::commit_entry(&updated_course_data.entry())?;
 
-        // link this new CourseData to CourseAnchor for it to be discoverable
         hdk::link_entries(
             &course_address,
             &updated_course_data_address,
