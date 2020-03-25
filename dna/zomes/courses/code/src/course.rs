@@ -114,8 +114,8 @@ pub fn course_anchor_def() -> ValidatingEntryType {
                     validate_only_teacher_can_do(validation_data.sources(), &entry.teacher_address, "create")
                 },
                 EntryValidationData::Modify { new_entry, old_entry, validation_data, .. } => {
-                    validate_no_teacher_change(&old_entry.teacher_address, &new_entry.teacher_address)?;
-                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "modify")
+                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "modify")?;
+                    validate_no_teacher_change(&old_entry.teacher_address, &new_entry.teacher_address)
                 },
                 EntryValidationData::Delete {old_entry, validation_data, .. } => {
                     validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "delete")
@@ -184,12 +184,12 @@ pub fn course_data_def() -> ValidatingEntryType {
         validation: | validation_data: hdk::EntryValidationData<CourseData>| {
             match validation_data{
                 EntryValidationData::Create { entry, validation_data } => {
-                    validate_course_title(&entry.title)?;
-                    validate_only_teacher_can_do(validation_data.sources(), &entry.teacher_address, "create")
+                    validate_only_teacher_can_do(validation_data.sources(), &entry.teacher_address, "create")?;
+                    validate_course_title(&entry.title)
                 },
                 EntryValidationData::Modify { new_entry, old_entry, validation_data, .. } => {
-                    validate_course_title(&new_entry.title)?;
-                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "modify")
+                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "modify")?;
+                    validate_course_title(&new_entry.title)
                 },
                 EntryValidationData::Delete { old_entry, validation_data, .. } => {
                     validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "delete")
