@@ -454,109 +454,38 @@ pub fn add_module_to_course(
     course_address: &Address,
     module_address: &Address,
 ) -> ZomeApiResult<Address> {
-    /*
-    how this method should be:
-    1. call func to get the CourseAnchor, CourseData entries or fail with error
-    2. do our thing
-    3. pass resulting CourseData to save it to Holochain
-    */
-    let current_course_anchor = hdk::get_entry(course_address).unwrap().unwrap();
+    // we don't need course_anchor here so we'll just ignore this variable
+    let (_course_anchor, course_data) = get_anchor_and_latest_data_entries(course_address.clone())?;
 
-    // QUESTION: why are we doing it like that?
-    // I see advantage of this method in handling a case when we receive address that
-    // doesn't correspond to the CourseAnchor.
-    // Does it mean course::update needs to be updated accordingly?
-    if let Entry::App(_, current_course_anchor) = current_course_anchor {
-        // NOTE: now that we're not going to be changing course_anchor_entry we probably should have a less verbose
-        // way of throwing an error about type mismatch?
-        let _course_anchor_entry = CourseAnchor::try_from(current_course_anchor.clone())
-            .expect("Entry at this address is not Course. You sent a wrong address");
-        let latest_course_data_addr =
-            get_latest_link_addr(course_address, "course_anchor->course_data")?;
-        let latest_course_data: CourseData = hdk::utils::get_as_type(latest_course_data_addr)?;
+    let mut updated_course_data: CourseData = CourseData::from_instance(course_data);
+    updated_course_data.modules.push(module_address.clone());
 
-        // create a copy of the latest_course_data and add new module there
-        let mut updated_course_data: CourseData = CourseData::from_instance(latest_course_data);
+    // NOTE: we don't actually need this address here, but Rust won't let us ignore return value
+    // of the function, so we'll just ignore this variable.
+    // Also If we decide to return address of the updated CourseData, we already have it saved here
+    let _updated_course_data_addr = commit_course_data(&updated_course_data);
 
-        //************************ ACTUAL FUNCTIONALITY BEGIN
-        updated_course_data.modules.push(module_address.clone());
-        //************************ ACTUAL FUNCTIONALITY END
-
-        // commit new course_data
-        let updated_course_data_address = hdk::commit_entry(&updated_course_data.entry())?;
-
-        hdk::link_entries(
-            &course_address,
-            &updated_course_data_address,
-            "course_anchor->course_data",
-            "",
-        )?;
-
-        // since CourseAnchor entry stays the same, we're not returning any new addresses here
-        // and since we don't have ownership of the course_address in this method, we're cloning it
-        // to comply with the return type requirements
-        Ok(course_address.clone())
-    } else {
-        panic!("This address is not a valid address")
-    }
+    Ok(updated_course_data.course_anchor)
 }
 
 pub fn delete_module_from_course(
     course_address: &Address,
     module_address: &Address,
 ) -> ZomeApiResult<Address> {
-    /*
-    how this method should be:
-    1. call func to get the CourseAnchor, CourseData entries or fail with error
-    2. do our thing
-    3. pass resulting CourseData to save it to Holochain
-    */
+    // we don't need course_anchor here so we'll just ignore this variable
+    let (_course_anchor, course_data) = get_anchor_and_latest_data_entries(course_address.clone())?;
 
-    // TODO: this method is almost a complete copy-paste of add_module_to_course and needs to be refactored
-    let current_course_anchor = hdk::get_entry(course_address).unwrap().unwrap();
+    let mut updated_course_data: CourseData = CourseData::from_instance(course_data);
+    // remove module from vec of modules
+    updated_course_data.modules.remove_item(&module_address);
+    updated_course_data.timestamp += 1; // we need to prevent duplication by changing the array.
 
-    // QUESTION: why are we doing it like that?
-    // I see advantage of this method in handling a case when we receive address that
-    // doesn't correspond to the CourseAnchor.
-    // Does it mean course::update needs to be updated accordingly?
-    // ANSWER: because it is a learning app and we're showing different ways of how something could be done
-    if let Entry::App(_, current_course_anchor) = current_course_anchor {
-        // NOTE: now that we're not going to be changing course_anchor_entry we probably should have a less verbose
-        // way of throwing an error about type mismatch?
-        let _course_anchor_entry = CourseAnchor::try_from(current_course_anchor.clone())
-            .expect("Entry at this address is not Course. You sent a wrong address");
-        let latest_course_data_addr =
-            get_latest_link_addr(course_address, "course_anchor->course_data")?;
-        let latest_course_data: CourseData = hdk::utils::get_as_type(latest_course_data_addr)?;
+    // NOTE: we don't actually need this address here, but Rust won't let us ignore return value
+    // of the function, so we'll just ignore this variable.
+    // Also If we decide to return address of the updated CourseData, we already have it saved here
+    let _updated_course_data_addr = commit_course_data(&updated_course_data);
 
-        // create a copy of the latest_course_data and add new module there
-        let mut updated_course_data: CourseData = CourseData::from_instance(latest_course_data);
-
-        //************************ ACTUAL FUNCTIONALITY BEGIN
-        // remove module from vec of modules
-        updated_course_data.modules.remove_item(&module_address);
-        updated_course_data.timestamp += 1; // we need to prevent duplication by changing the array.
-
-        //************************ ACTUAL FUNCTIONALITY END
-
-        // commit new course_data
-        let updated_course_data_address = hdk::commit_entry(&updated_course_data.entry())?;
-
-        // link this new CourseData to CourseAnchor for it to be discoverable
-        hdk::link_entries(
-            &course_address,
-            &updated_course_data_address,
-            "course_anchor->course_data",
-            "",
-        )?;
-
-        // since CourseAnchor entry stays the same, we're not returning any new addresses here
-        // and since we don't have ownership of the course_address in this method, we're cloning it
-        // to comply with the return type requirements
-        Ok(course_address.clone())
-    } else {
-        panic!("This address is not a valid address")
-    }
+    Ok(updated_course_data.course_anchor)
 }
 
 fn get_anchor_and_latest_data_entries(
@@ -608,6 +537,28 @@ fn get_anchor_and_latest_data_entries(
     };
 
     Ok((course_anchor, course_data))
+}
+
+fn commit_course_data(course_data: &CourseData) -> ZomeApiResult<Address> {
+    // Since every CourseData already has address of corresponding CourseAnchor,
+    // we can avoid having it as a second parameter for this func
+    // NOTE: this creates a situation where course_anchor field of CourseData
+    // entry points to a wrong CourseAnchor and we'll be creating invalid link.
+    // However, this means that we're working with a corrupted CourseData instance
+    // and I'm not sure that invalid link would be the biggest of problems in this case
+    let updated_course_data_address = hdk::commit_entry(&course_data.entry())?;
+
+    // create a link from CourseAnchor at course_data.course_anchor
+    // to CourseData at updated_course_data_address
+    // This is for CourseData to be discoverable from CourseAnchor
+    hdk::link_entries(
+        &course_data.course_anchor,
+        &updated_course_data_address,
+        "course_anchor->course_data",
+        "",
+    )?;
+
+    Ok(updated_course_data_address)
 }
 
 pub fn enrol_in_course(course_address: Address) -> ZomeApiResult<Address> {
