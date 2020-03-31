@@ -200,7 +200,6 @@ pub fn course_data_def() -> ValidatingEntryType {
     )
 }
 
-
 /* *************** Course Validations */
 fn validate_course_title(title: &str) -> Result<(), String> {
     if title.len() > 50 {
@@ -216,7 +215,10 @@ fn validate_only_teacher_can_do(
     action_name: &str,
 ) -> Result<(), String> {
     if !validation_data_sources.contains(teacher_addr) {
-        return Err(format!("Only the teacher can {} their courses", action_name));
+        return Err(format!(
+            "Only the teacher can {} their courses",
+            action_name
+        ));
     }
     Ok(())
 }
@@ -270,7 +272,6 @@ pub fn anchor_all_courses_address() -> ZomeApiResult<Address> {
     hdk::entry_address(&anchor_all_courses_entry())
 }
 /* ********************************************* */
-
 
 /* *************** Course Helper Functions: CRUD */
 pub fn create(title: String, timestamp: u64) -> ZomeApiResult<Address> {
@@ -417,7 +418,6 @@ pub fn list() -> ZomeApiResult<Vec<Address>> {
 }
 /* ********************************************* */
 
-
 /* *************** Course Helper Functions: Other */
 pub fn get_latest_link_addr(base_address: &Address, link_name: &str) -> ZomeApiResult<Address> {
     // NOTE: this method is written with an assumption that we'll always have ordered links vector
@@ -454,6 +454,12 @@ pub fn add_module_to_course(
     course_address: &Address,
     module_address: &Address,
 ) -> ZomeApiResult<Address> {
+    /*
+    how this method should be:
+    1. call func to get the CourseAnchor, CourseData entries or fail with error
+    2. do our thing
+    3. pass resulting CourseData to save it to Holochain
+    */
     let current_course_anchor = hdk::get_entry(course_address).unwrap().unwrap();
 
     // QUESTION: why are we doing it like that?
@@ -471,7 +477,10 @@ pub fn add_module_to_course(
 
         // create a copy of the latest_course_data and add new module there
         let mut updated_course_data: CourseData = CourseData::from_instance(latest_course_data);
+
+        //************************ ACTUAL FUNCTIONALITY BEGIN
         updated_course_data.modules.push(module_address.clone());
+        //************************ ACTUAL FUNCTIONALITY END
 
         // commit new course_data
         let updated_course_data_address = hdk::commit_entry(&updated_course_data.entry())?;
@@ -496,6 +505,13 @@ pub fn delete_module_from_course(
     course_address: &Address,
     module_address: &Address,
 ) -> ZomeApiResult<Address> {
+    /*
+    how this method should be:
+    1. call func to get the CourseAnchor, CourseData entries or fail with error
+    2. do our thing
+    3. pass resulting CourseData to save it to Holochain
+    */
+
     // TODO: this method is almost a complete copy-paste of add_module_to_course and needs to be refactored
     let current_course_anchor = hdk::get_entry(course_address).unwrap().unwrap();
 
@@ -503,6 +519,7 @@ pub fn delete_module_from_course(
     // I see advantage of this method in handling a case when we receive address that
     // doesn't correspond to the CourseAnchor.
     // Does it mean course::update needs to be updated accordingly?
+    // ANSWER: because it is a learning app and we're showing different ways of how something could be done
     if let Entry::App(_, current_course_anchor) = current_course_anchor {
         // NOTE: now that we're not going to be changing course_anchor_entry we probably should have a less verbose
         // way of throwing an error about type mismatch?
@@ -515,9 +532,12 @@ pub fn delete_module_from_course(
         // create a copy of the latest_course_data and add new module there
         let mut updated_course_data: CourseData = CourseData::from_instance(latest_course_data);
 
+        //************************ ACTUAL FUNCTIONALITY BEGIN
         // remove module from vec of modules
         updated_course_data.modules.remove_item(&module_address);
         updated_course_data.timestamp += 1; // we need to prevent duplication by changing the array.
+
+        //************************ ACTUAL FUNCTIONALITY END
 
         // commit new course_data
         let updated_course_data_address = hdk::commit_entry(&updated_course_data.entry())?;
@@ -537,6 +557,57 @@ pub fn delete_module_from_course(
     } else {
         panic!("This address is not a valid address")
     }
+}
+
+fn get_anchor_and_latest_data_entries(
+    some_address: Address,
+) -> ZomeApiResult<(CourseAnchor, CourseData)> {
+    // This method expects to receive address of either CourseAnchor or CourseData
+    // and it returns tuple with CourseAnchor entry & latest CourseData entry corresponding to the course.
+    // It will panic if address doesn't correspond to either CourseAnchor / CourseData
+
+    // we'll need a course_data variable in the outer scope
+    // and we'll need to check if it's been initialized already, thus usage of Option
+    let mut course_data: Option<CourseData> = None;
+
+    // NOTE: cloning some_address because we'll need to use it several times
+    // and get_as_type will consume it otherwise
+    let course_anchor: CourseAnchor = match hdk::utils::get_as_type(some_address.clone()) {
+        Ok(course_anchor) => course_anchor,
+        // if failed to get CourseAnchor entry from some_address, try to get it as CourseData
+        Err(_) => {
+            let tmp_course_data: CourseData = match hdk::utils::get_as_type(some_address.clone()) {
+                Ok(course_data) => course_data,
+                // at this point we've tried to retrieve provided address as both CourseAnchor and
+                // CourseData, and both options have failed. We can't do anything else than return
+                // an error of some sort (and panic is the quickiest way to do so)
+                Err(_) => {
+                    panic!(
+                        "Provided address doesn't correspond to neither CourseData or CourseAnchor"
+                    );
+                }
+            };
+            // clone this course_data into outer scope variable
+            course_data = Some(tmp_course_data.clone());
+            // retrieve course_anchor from course_data's implicit link
+            hdk::utils::get_as_type(tmp_course_data.course_anchor)?
+        }
+    };
+
+    let course_data = match course_data {
+        Some(data) => data,
+        None => {
+            // NOTE: if course_data isn't initialized yet and we're executing this code,
+            // it means that we've managed to retrieve course_anchor from some_address
+            // and therefore we can assume that some_address is in fact course_anchor's address
+            // TODO: instead of ?, should provide the same error text that is in panic a few lines above
+            let latest_course_data_addr =
+                get_latest_link_addr(&some_address, "course_anchor->course_data")?;
+            hdk::utils::get_as_type(latest_course_data_addr)?
+        }
+    };
+
+    Ok((course_anchor, course_data))
 }
 
 pub fn enrol_in_course(course_address: Address) -> ZomeApiResult<Address> {
