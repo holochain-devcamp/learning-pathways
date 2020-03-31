@@ -289,23 +289,16 @@ pub fn create(title: String, timestamp: u64) -> ZomeApiResult<Address> {
     // link CourseAnchor to anchor_all_courses for this course to be discoverable
     hdk::link_entries(&anchor_address, &course_anchor_address, "course_list", "")?;
 
-    // create a CourseData entry & commit it to DHT
-    let course_data_entry = CourseData::new(
+    // create a CourseData instance
+    let course_data = CourseData::new(
         title,
         AGENT_ADDRESS.to_string().into(),
         course_anchor_address.clone(),
         timestamp,
-    )
-    .entry();
-    let course_data_address = hdk::commit_entry(&course_data_entry)?;
+    );
 
-    // link CourseAnchor to the CourseData entry for it to be discoverable
-    hdk::link_entries(
-        &course_anchor_address,
-        &course_data_address,
-        "course_anchor->course_data",
-        "",
-    )?;
+    // commit instance to Holochain
+    let _course_data_address = commit_course_data(&course_data)?;
 
     Ok(course_anchor_address)
 }
@@ -315,14 +308,12 @@ pub fn update(
     modules_addresses: Vec<Address>,
     course_address: &Address,
 ) -> ZomeApiResult<Address> {
-    //TODO:  check if addr we receive is actually CourseAnchor, not CourseData
+    let (_course_anchor, course_data) = get_anchor_and_latest_data_entries(course_address.clone())?;
+    // save address of course_anchor entry separately to be independent of 
+    // course_data lifetime
+    let course_anchor_addr = course_data.course_anchor.clone();
 
-    // get latest CourseData entry by looking at links of CourseAnchor entry
-    let latest_course_data_addr =
-        get_latest_link_addr(course_address, "course_anchor->course_data")?;
-    let course_data: CourseData = hdk::utils::get_as_type(latest_course_data_addr)?;
-
-    // create a new version of CourseData entry
+    // create a new version of CourseData instance
     let new_course_data_entry = CourseData::from(
         title,
         course_data.teacher_address,
@@ -330,37 +321,31 @@ pub fn update(
         // TODO: we shouldn't be using old timestamp here. Maybe we should receive it as a parameter for update?
         course_data.timestamp,
         modules_addresses,
-    )
-    .entry();
-    let new_course_data_address = hdk::commit_entry(&new_course_data_entry)?;
+    );
+    let _new_course_data_address = commit_course_data(&new_course_data_entry)?;
 
-    hdk::link_entries(
-        &course_address,
-        &new_course_data_address,
-        "course_anchor->course_data",
-        "",
-    )?;
-
-    // since CourseAnchor entry stays the same, we're not returning any new addresses here
-    // and since we don't have ownership of the course_address in this method, we're cloning it
-    // to comply with the return type requirements
-    Ok(course_address.clone())
+    // Since CourseAnchor entry stays the same, we're not returning any new addresses here.
+    // And in order for the course_anchor_addr to be valid after this method ends, we clone it
+    Ok(course_anchor_addr.clone())
 }
 
 pub fn delete(course_address: Address) -> ZomeApiResult<Address> {
-    //TODO:  check if addr we receive is actually CourseAnchor, not CourseData
+    let (course_anchor, course_data) = get_anchor_and_latest_data_entries(course_address.clone())?;
+    // save address of course_anchor entry separately to be independent of 
+    // course_data lifetime
+    let course_anchor_addr = course_data.course_anchor.clone();
 
     // remove link from all_courses anchor to this course's CourseAnchor entry
     hdk::remove_link(
         &anchor_all_courses_address()?,
-        &course_address,
+        &course_anchor_addr,
         "course_list",
         "",
     )?;
 
     // find addresses of all CourseData entries for the course
     let course_data_addresses = hdk::get_links(
-        &course_address,
+        &course_anchor_addr,
         LinkMatch::Exactly("course_anchor->course_data"),
         LinkMatch::Any,
     )?
@@ -372,29 +357,22 @@ pub fn delete(course_address: Address) -> ZomeApiResult<Address> {
     }
 
     // now go through all the students linked to this course and remove their links as well
-    let students = get_students(course_address.clone())?;
-    let course_anchor: CourseAnchor = hdk::utils::get_as_type(course_address.clone())?;
+    let students = get_students(course_anchor_addr.clone())?;
     for student in students {
-        hdk::remove_link(&student, &course_address, "student->course", "")?;
+        hdk::remove_link(&student, &course_anchor_addr, "student->course", "")?;
     }
     // remove link between teacher and this course
     hdk::remove_link(
         &course_anchor.teacher_address,
-        &course_address,
+        &course_anchor_addr,
         "teacher->courses",
         "",
     )?;
 
-    hdk::remove_entry(&course_address)
+    hdk::remove_entry(&course_anchor_addr)
 }
 
 pub fn list() -> ZomeApiResult<Vec<Address>> {
-    // TODO: need to refactor the way UI would be handling CourseData.
-    // In the current implementation, UI would try to get addr of CourseData and pass it
-    // to all Course helper functions, while they're expecting only CourseAnchor addresses.
-    // Since these have the same datatype, it won't be catched by Rust compiler or any other automated
-    // methods and would only fail when trying to treat CourseData as CourseAnchor.
-
     // first, retrieve addresses of all CourseAnchor entries
     // that would allow us to get access to the underlying CourseData
     let course_anchor_addresses = hdk::get_links(
