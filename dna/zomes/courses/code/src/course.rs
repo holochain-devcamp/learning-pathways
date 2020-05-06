@@ -341,18 +341,11 @@ pub fn delete(course_address: Address) -> ZomeApiResult<Address> {
         "",
     )?;
 
-    // find addresses of all CourseData entries for the course
-    let course_data_addresses = hdk::get_links(
-        &course_anchor_addr,
-        LinkMatch::Exactly("course_anchor->course_data"),
-        LinkMatch::Any,
-    )?
-    .addresses();
-
-    // remove all CourseData for the course
-    for course_data_addr in course_data_addresses {
-        hdk::remove_entry(&course_data_addr)?;
-    }
+    // NOTE: we're not trying to remove CourseData entries linked to the anchor because:
+    //   1) these entries would be inaccessible once the anchor entry is deleted
+    //   2) since there's no actual deletion in Holochain (see https://developer.holochain.org/docs/glossary/#create-read-update-delete-crud),
+    //       these entries would still persist and additional metadata that marks them as deleted would be created.
+    //       And considering p1 above, we wouldn't have anything to gain by doing that.
 
     // now go through all the students linked to this course and remove their links as well
     let students = get_students(course_anchor_addr.clone())?;
