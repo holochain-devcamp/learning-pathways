@@ -113,13 +113,11 @@ pub fn course_anchor_def() -> ValidatingEntryType {
                 EntryValidationData::Create { entry, validation_data } => {
                     validate_only_teacher_can_do(validation_data.sources(), &entry.teacher_address, "create")
                 },
-                EntryValidationData::Modify { new_entry, old_entry, validation_data, .. } => {
-                    validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "modify")?;
-                    validate_no_teacher_change(&old_entry.teacher_address, &new_entry.teacher_address)
-                },
                 EntryValidationData::Delete {old_entry, validation_data, .. } => {
                     validate_only_teacher_can_do(validation_data.sources(), &old_entry.teacher_address, "delete")
-                }
+                },
+                // course_anchor can't be modified so there's no need to validate this action
+                EntryValidationData::Modify { .. } => Ok(())
             }
         },
         links: [
