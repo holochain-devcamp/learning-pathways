@@ -250,7 +250,7 @@ pub fn anchor_all_courses_entry_def() -> ValidatingEntryType {
         },
         links:[
             to!(
-                "course",
+                "course_anchor",
                 link_type: "course_list",
                 validation_package:||{
                     hdk::ValidationPackageDefinition::Entry
