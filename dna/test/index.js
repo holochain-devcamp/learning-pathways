@@ -40,50 +40,60 @@ const conductorConfig = Config.gen(
   }
 );
 
-
-orchestrator.registerScenario("Write you scenario here", async (s, t) => {
+// NOTE (e-nastasia): this scenario didn't have a description at all, so for the sake of consistency I've made one
+// and numerated it 0 because it's the first one that is defined in this file.
+// Please feel free to re-organize this numeration as appropriate
+orchestrator.registerScenario("Scenario 0: User can create courses and they and other users can see them", async (s, t) => {
   const { alice, bob } = await s.players(
     { alice: conductorConfig, bob: conductorConfig },
     true
   );
 
+  // Alice creates first course
   const course_addr_1 = await alice.call(
     "course_dna",
     "courses",
     "create_course",
     {
-      title: "course for scenario 5-1",
+      title: "course for scenario 0",
       timestamp: 123
     }
   );
 
   console.log(course_addr_1);
+  // we verify that first course was created succesfully
   t.ok(course_addr_1.Ok);
   await s.consistency();
 
+  // Alice creates second course
   const course_addr_2 = await alice.call(
     "course_dna",
     "courses",
     "create_course",
     {
-      title: "course for scenario 5-2",
+      title: "course for scenario 0",
       timestamp: 1234
     }
   );
   console.log(course_addr_2);
+  // we verify that second course was created succesfully
   t.ok(course_addr_2.Ok);
   await s.consistency();
 
+  // list all courses that belong to Alice
   const all_courses_alice = await alice.call("course_dna", "courses", "get_my_courses", {
   });
 
+  // since Alice created 2 courses, we verify that this list contains 2 addresses
   t.true(all_courses_alice.Ok[0] != null);
   t.true(all_courses_alice.Ok[1] != null);
 
+  // list all courses from perspective of other user Bob who didn't create any courses
   const all_courses_bob = await bob.call("course_dna", "courses", "get_all_courses", {
   });
-  t.true(all_courses_alice.Ok[0] != null);
-  t.true(all_courses_alice.Ok[1] != null);
+  // even though Bob didn't create any courses, he should still see 2 courses (created by Alice)
+  t.true(all_courses_bob.Ok[0] != null);
+  t.true(all_courses_bob.Ok[1] != null);
 
   await s.consistency();
 
@@ -508,6 +518,7 @@ orchestrator.registerScenario(
       { alice: conductorConfig, bob: conductorConfig },
       true
     );
+    // Alice creates a test course
     const course_addr = await alice.call(
       "course_dna",
       "courses",
@@ -519,6 +530,7 @@ orchestrator.registerScenario(
     );
     console.log("Hedayat_abedijoo_course_addr");
     console.log(course_addr);
+    // verify that course was created succesfully
     t.ok(course_addr.Ok);
 
     await s.consistency();
@@ -535,10 +547,11 @@ orchestrator.registerScenario(
     );
 
     console.log(module_addr);
+    // verify that module was created successfully
     t.ok(module_addr.Ok);
     await s.consistency();
 
-    const delete_moduel = await alice.call(
+    const delete_module = await alice.call(
       "course_dna",
       "courses",
       "delete_module",
@@ -546,10 +559,12 @@ orchestrator.registerScenario(
         module_address: module_addr.Ok
       }
     );
-    console.log(delete_moduel);
-    t.ok(delete_moduel.Ok);
+    console.log(delete_module);
+    // verify that module was deleted successfully
+    t.ok(delete_module.Ok);
     await s.consistency();
 
+    // view all courses that belong to Alice
     const courseResult = await alice.call(
       "course_dna",
       "courses",
@@ -559,7 +574,9 @@ orchestrator.registerScenario(
       }
     );
     console.log("Hedayat_abedijoo_getmycourse");
+    // verify that listing all courses was successfull
     console.log(courseResult.Ok);
+    // verify that course in the list matches the course Alice created in the beginning of the test
     //t.deepEqual(course_addr.Ok, courseResult.Ok[0]);
     await s.consistency();
 

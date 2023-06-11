@@ -1,6 +1,6 @@
 /************************ Import Required Libraries */
 use crate::course;
-use crate::course::Course;
+use crate::course::CourseAnchor;
 use crate::module::Module;
 use hdk::holochain_core_types::dna::entry_types::Sharing;
 use hdk::holochain_core_types::{entry::Entry, validation::EntryValidationData};
@@ -87,8 +87,8 @@ pub fn validate_author(
     module_address: &Address,
 ) -> ZomeApiResult<()> {
     let module: Module = hdk::utils::get_as_type(module_address.clone())?;
-    let course: Course = hdk::utils::get_as_type(module.course_address.clone())?;
-    if !signing_addresses.contains(&course.teacher_address) {
+    let course_anchor: CourseAnchor = hdk::utils::get_as_type(module.course_address.clone())?;
+    if !signing_addresses.contains(&course_anchor.teacher_address) {
         return Err(ZomeApiError::from(String::from(
             "Error: Only the teacher can create or modify a content for module",
         )));
